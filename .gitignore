@@ -1,1 +1,4 @@
-__pycache__/\n*.pth\n*.log\n.vscode/
+__pycache__
+*.log
+.vscode
+.venv
