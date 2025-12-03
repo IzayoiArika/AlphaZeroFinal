@@ -27,11 +27,12 @@ class AlphaZeroNode(MCTSNode):
 		self.game_state = ChessGameState.NoWinnerYet
 		self.model = a0_model
 		
-		# 如果不是根节点，先把落子执行到棋盘
 		if self.x is not None:
+			# place chess first if it is not the root joint
 			_, self.game_state = self.core.place_chess(self.x, self.y, flip_chess(chess))
 		
-		if self.parent == None: #祖宗节点只能单独计算
+		if self.parent == None:
+			# no parent -> root -> must calculate first (special treat)
 			with torch.no_grad():
 				state = self.core.to_tensor(self.chess).to(self.model.device)
 				self.policy_out, self.value_out = self.model(state)
@@ -60,7 +61,8 @@ class AlphaZeroNode(MCTSNode):
 					self.children.append(child)
 					self.unvisited_children.append(child)
 
-					if child.game_state == ChessGameState.SomeoneWins: #如果子节点赢了，证明这步棋赢了，没必要再探索
+					if child.game_state == ChessGameState.SomeoneWins:
+						# child wins -> this step of chess wins -> no need to explore any more, no succession
 						child.value_out = -1
 						self.game_state = ChessGameState.NoSuccession
 						self.value_out = 1
@@ -93,12 +95,15 @@ class AlphaZeroNode(MCTSNode):
 		return len(self.children)
 
 	def cal_model_out(self):                   
-		if self.game_state == ChessGameState.SomeoneWins: #如果赢了肯定是上一次落子，也就是对于这个节点来说对方的颜色赢了，所以反馈为-1
+		if self.game_state == ChessGameState.SomeoneWins:
+			# someone wins -> player who play in the last step wins
+			# therefore, for current chess, the opponent color wins
+			# that's why we set value_out to -1
 			self.value_out = -1
 		elif self.game_state == ChessGameState.Draw:
 			self.value_out = 0
 		
-	def random_simulate(self) -> float: # 对于父节点
+	def random_simulate(self) -> float:
 		return self.value_out
 
 	def select_child(self):
@@ -115,10 +120,10 @@ class AlphaZeroNode(MCTSNode):
 		counts = np.array([node.visits for node in self.children], dtype=np.float32)
 
 		if tau == 0:
-			# 贪心：选择访问次数最多的
+			# greedy sampling, choose the one with max visits
 			idx = np.argmax(counts)
 		else:
-			# 温度采样
+			# temperature sampling
 			probs = counts ** (1.0 / tau)
 			probs /= probs.sum()
 			idx = np.random.choice(len(self.children), p=probs)
@@ -126,9 +131,7 @@ class AlphaZeroNode(MCTSNode):
 		return self.children[idx]
 	
 	def __str__(self):
-		"""统计信息"""
-
-		# 初始化结果数组
+		# stats
 		size = self.core.size
 		model_win_rates = [[0.00 for _ in range(size)] for _ in range(size)]
 		search_win_rates = [[0.00 for _ in range(size)] for _ in range(size)]

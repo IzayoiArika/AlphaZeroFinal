@@ -1,4 +1,3 @@
-# 配置日志目录与日志
 import datetime
 import json
 import logging
@@ -115,7 +114,7 @@ class SelfTrainer:
 			format='%(asctime)s - %(levelname)s - %(message)s',
 			handlers=[
 				logging.FileHandler(log_path),
-				logging.StreamHandler()  # 同时输出到终端
+				logging.StreamHandler()  # print to terminal at the same time
 			]
 		)
 		cls.logger_initialized = True

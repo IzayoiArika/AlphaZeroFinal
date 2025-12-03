@@ -1,20 +1,9 @@
 import os
 
+from utils.enums import RGBTuple
+
 
 WorkingPath = os.path.dirname(os.path.dirname(__file__))
-
-class UI:
-	"""
-	**!!! 不推荐修改 !!!**
-
-	UI 相关配置项。本项目对 UI 的适配并非完美，不恰当的配置值可能导致各种现实问题，因此如非必要请勿修改。
-	"""
-
-	CellSize: int = 35
-	"""棋盘格单格边长。"""
-
-	Margin: int = 20
-	"""棋盘外边距。"""
 
 class Train:
 	"""训练相关配置项。"""
@@ -87,3 +76,25 @@ class GameCore:
 		# ...更多玩法
 
 	"""
+
+class UI:
+	"""
+	**!!! 不推荐修改 !!!**
+
+	UI 相关配置项。本项目对 UI 的适配并非完美，不恰当的配置值可能导致各种现实问题，因此如非必要请勿修改。
+	"""
+
+	CellSize: int = 35
+	"""棋盘格单格边长。"""
+
+	Margin: int = 20
+	"""棋盘外边距。"""
+
+	BackgroundColor: tuple[int, int, int] = RGBTuple.LightBlue
+
+	BorderWidth: int = 2
+
+	ChessSize: int = 10
+
+	MoveOrderUISizeX: int = 700
+	MoveOrderUISizeY: int = 400

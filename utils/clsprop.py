@@ -18,7 +18,6 @@ class classproperty(Generic[MT, RT]):
 		self.fget = classmethod(fget)
 
 	def __get__(self, instance: MT | None, objtype: type[MT]) -> RT:
-		
 		if instance is not None:
 			if sys.version_info >= (3, 10):
 				attr_name = self.fget.__name__

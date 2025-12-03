@@ -5,6 +5,7 @@ class RGBTuple:
 	Black = (0, 0, 0)
 	White = (255, 255, 255)
 	Brown = (222, 184, 135)
+	LightBlue = (238, 238, 255)
 
 class ChessGameState(int, Enum):
 	NoWinnerYet = 0
@@ -25,13 +26,9 @@ def flip_chess(chess: int | ChessType) -> ChessType:
 
 class Subwindow(str, Enum):
 	Chessboard = 'chessboard'
-	ValueOut = 'value_out'
 	SearchNum = 'search_num'
-	PolicyOut = 'policy_out'
 
 subwindow_index = {
 	Subwindow.Chessboard: 0,
-	Subwindow.ValueOut: 1,
-	Subwindow.SearchNum: 2,
-	Subwindow.PolicyOut: 3,
+	Subwindow.SearchNum: 1,
 }

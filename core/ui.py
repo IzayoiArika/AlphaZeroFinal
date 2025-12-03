@@ -10,21 +10,26 @@ from utils.enums import ChessType, RGBTuple, Subwindow, subwindow_index
 class ChessGameUI:
 	def __init__(self):
 		pygame.init()
-		screen_size = config.UI.CellSize * ChessGameCore.size * 2 + 3 * config.UI.Margin
 		self.font = pygame.font.Font(None, 20)
-		self.screen = pygame.display.set_mode((1.5 * screen_size, screen_size))
+		self.screen = pygame.display.set_mode((
+			max(
+				config.UI.CellSize * ChessGameCore.size * 2 + 3 * config.UI.Margin,
+				config.UI.MoveOrderUISizeX
+			),
+			max(
+				config.UI.CellSize * ChessGameCore.size + 2 * config.UI.Margin,
+				config.UI.MoveOrderUISizeY
+			)
+		))
 		
-		self._n_cells_size = config.UI.CellSize * ChessGameCore.size
+		self._n_cells_size = config.UI.CellSize * (ChessGameCore.size - 1)
 		_margin_1 = config.UI.Margin
 		_margin_2 = config.UI.Margin * 2 + self._n_cells_size
 
 		self.subwindow_offsets = [
 			(_margin_1, _margin_1),
 			(_margin_2, _margin_1),
-			(_margin_1, _margin_2),
-			(_margin_2, _margin_2),
 		]
-
 
 		self.player_chess: ChessType = None
 
@@ -40,50 +45,53 @@ class ChessGameUI:
 
 		offset_x, offset_y = self.get_subwindow_offset(subwindow)
 
+		# chessboard background
 		draw_rect(
 			surface = self.screen,
-			color = RGBTuple.Brown,
+			color = config.UI.BackgroundColor,
 			rect = (
-				offset_x, offset_y,
+				offset_x + 0.5 * config.UI.CellSize,
+				offset_y + 0.5 * config.UI.CellSize,
 				self._n_cells_size, self._n_cells_size
 			)
 		)
 
-		for i in range(ChessGameCore.size + 1):
+		# chessboard lines
+		for i in range(ChessGameCore.size):
 			draw_line(
 				surface = self.screen,
 				color = RGBTuple.Black,
 				start_pos = (
-					0 + offset_x,
-					i * config.UI.CellSize + offset_y
+					0 + offset_x + 0.5 * config.UI.CellSize,
+					i * config.UI.CellSize + offset_y + 0.5 * config.UI.CellSize
 				),
 				end_pos = (
-					self._n_cells_size + offset_x,
-					i *config.UI.CellSize + offset_y
+					self._n_cells_size + offset_x + 0.5 * config.UI.CellSize,
+					i *config.UI.CellSize + offset_y + 0.5 * config.UI.CellSize
 				),
-				width = 3
+				width = config.UI.BorderWidth
 			)
 
 			draw_line(
 				surface = self.screen,
 				color = RGBTuple.Black,
 				start_pos = (
-					i * config.UI.CellSize + offset_x,
-					0 + offset_y
+					i * config.UI.CellSize + offset_x + 0.5 * config.UI.CellSize,
+					0 + offset_y + 0.5 * config.UI.CellSize
 				),
 				end_pos = (
-					i * config.UI.CellSize + offset_x,
-					self._n_cells_size + offset_y
+					i * config.UI.CellSize + offset_x + 0.5 * config.UI.CellSize,
+					self._n_cells_size + offset_y + 0.5 * config.UI.CellSize
 				),
-				width = 3
+				width = config.UI.BorderWidth
 			)
 
 		label = self.font.render(subwindow.value, True, RGBTuple.Black)
 		self.screen.blit(
 			source = label,
 			dest = (
-				offset_x + 0.2 * self._n_cells_size,
-				offset_y - config.UI.Margin + 4
+				offset_x + 0.2 * self._n_cells_size + 0.5 * config.UI.CellSize,
+				offset_y - config.UI.Margin + 4 + 0.5 * config.UI.CellSize,
 			)
 		)
 
@@ -95,10 +103,8 @@ class ChessGameUI:
 
 				else:
 					if chess == self.player_chess:
-						# 这是玩家的棋子
 						color = RGBTuple.Black if self.player_chess == ChessType.Black else RGBTuple.White
 					else:
-						# 这是AI的棋子
 						color = RGBTuple.White if self.player_chess == ChessType.Black else RGBTuple.Black
 					
 					draw_circle(
@@ -108,7 +114,7 @@ class ChessGameUI:
 							offset_x + (i + 0.5) * config.UI.CellSize,
 							offset_y + (j + 0.5) * config.UI.CellSize
 						),
-						radius = 13
+						radius = config.UI.ChessSize
 					)
 		
 		if subwindow == Subwindow.Chessboard:
@@ -117,19 +123,16 @@ class ChessGameUI:
 		for child in node.children:
 			value = 0
 			x, y = child.x, child.y
-			if subwindow == Subwindow.ValueOut:
-				value = round(-child.value_out, 2)
-			elif subwindow ==  Subwindow.SearchNum:
+			if subwindow ==  Subwindow.SearchNum:
 				value = child.visits
-			elif subwindow == Subwindow.PolicyOut:
-				value = round(node.policy_out[x * ChessGameCore.size + y], 2)
-			
+			# if more subwindows are needed, do not forget to rewrite how to get its value.
+
 			label = self.font.render(str(value), True, RGBTuple.Black)
 			self.screen.blit(
 				source = label,
 				dest = (
-					offset_x + (x + 0.1) * config.UI.CellSize,
-					offset_y + (y + 0.2) * config.UI.CellSize,
+					offset_x + (x + 0.2 + 0.5) * config.UI.CellSize,
+					offset_y + (y + 0.2 + 0.5) * config.UI.CellSize,
 				)
 			)
 
@@ -161,17 +164,17 @@ class ChessGameUI:
 
 		title_font = pygame.font.Font(None, 40)
 		title_text = title_font.render('Choose Your Color', True, RGBTuple.Black)
-		self.screen.blit(title_text, (config.UI.CellSize*ChessGameCore.size - 100, 50))
-		
+		self.screen.blit(title_text, (config.UI.CellSize * ChessGameCore.size - 100, 50))
+
 		# Black
 		black_rect = pygame.Rect(100, 150, 200, 100)
 		draw_rect(self.screen, (200, 200, 200), black_rect)
 		draw_rect(self.screen, RGBTuple.Black, black_rect, 3)
 		draw_circle(self.screen, RGBTuple.Black, (200, 200), 30)
-		
+
 		black_text = self.font.render('Black (First Move)', True, RGBTuple.Black)
 		self.screen.blit(black_text, (130, 270))
-		
+
 		# White
 		white_rect = pygame.Rect(350, 150, 200, 100)
 		draw_rect(self.screen, (200, 200, 200), white_rect)

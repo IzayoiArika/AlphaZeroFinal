@@ -35,10 +35,10 @@ class AlphaZeroModule(torch.nn.Module):
 		self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
 		self.res2 = ResidualBlock(128)
 
-		# policy head: 输出 [B, H, W]
+		# policy head: [B, H, W]
 		self.policy_conv = nn.Conv2d(128, 1, kernel_size=1)
 
-		# value head: 先池化成全局，再MLP
+		# value head: pooling + MLP
 		self.value_fc1  = nn.Linear(128, 128)
 		self.value_fc2  = nn.Linear(128, 1)
 
@@ -108,7 +108,7 @@ class AlphaZeroModule(torch.nn.Module):
 		return policy_logits, value
 
 	def train_model(self, epochs: int):
-		self.to(self.device)   # 确保模型在 self.device
+		self.to(self.device)   # ensure the model at self.device
 		self.train()
 
 		for epoch in range(1, epochs + 1):
@@ -121,7 +121,7 @@ class AlphaZeroModule(torch.nn.Module):
 				state = torch.tensor(data['state'],dtype=torch.float32).view(2, ChessGameCore.size, ChessGameCore.size) #[2,size,size]
 				policy = torch.tensor(data['search_rate'],dtype=torch.float32) #[size,size]
 
-				# 数据增强
+				# random rotation and flip
 				state = torch.rot90(state, k=n, dims=(1, 2))  
 				policy = torch.rot90(policy, k=n, dims=(0, 1)) 
 				if (
@@ -142,7 +142,7 @@ class AlphaZeroModule(torch.nn.Module):
 		
 
 			# forward
-			policy_logits, values = self(states)  # forward 已保证输入和模型同设备
+			policy_logits, values = self(states)  # forward guarantees input and model are from same device
 
 			policy_loss = -(target_policies * F.log_softmax(policy_logits, dim=1)).sum(dim=1).mean()
 
