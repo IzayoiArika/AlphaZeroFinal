@@ -1,4 +1,3 @@
-from genericpath import isfile
 import math
 
 import numpy as np

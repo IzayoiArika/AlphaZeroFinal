@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import math
 import sys
+
+from utils import config
 if sys.version_info >= (3, 11):
 	from typing import Self
 else:
@@ -23,7 +25,7 @@ class MonteCarloTreeSearchNode(ABC):
 		self.total_reward = 0
 		"""总收益"""
 
-		self.exploration_rate = 0.3
+		self.exploration_rate = config.Train.MCTSExplorationRate
 		"""探索率"""
 
 	@abstractmethod

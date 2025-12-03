@@ -1,3 +1,4 @@
+import os
 import random
 import json
 import logging
@@ -43,7 +44,7 @@ class AlphaZeroModule(torch.nn.Module):
 
 		self.relu = nn.ReLU()
 		self.criterion = torch.nn.MSELoss()
-		self.optimizer = torch.optim.Adam(self.parameters(), config.AlphaZero.LearningRate)
+		self.optimizer = torch.optim.Adam(self.parameters(), config.Train.LearningRate)
 
 
 		try:
@@ -53,24 +54,33 @@ class AlphaZeroModule(torch.nn.Module):
 			print(f'未加载模型参数: {e}')
 
 		self.buffer = []
-		self.buffer_size = config.AlphaZero.BufferSize
+		self.buffer_size = config.Train.BufferSize
 		self.buffer_ptr = 0
 
 		self.to(self.device) 
 
 		try:
-			for i in range(1, 2):
-				path = f'data/d{i}.json'
-				with open(path, 'r', encoding='utf-8') as f:
+			idx = 0
+			data_folder = os.path.join(config.WorkingPath, 'data')
+			while True:
+				file_path = os.path.join(data_folder, f'snapshot_{idx}.json')
+				if not os.path.exists(file_path):
+					break
+				idx += 1
+			if idx != 0:
+				file_path = os.path.join(data_folder, f'snapshot_{idx - 1}.json')
+				with open(file_path, 'r', encoding='utf-8') as f:
 					data = json.load(f)
-					self.buffer.extend(data)   
+					self.buffer.extend(data)
+			else:
+				raise FileNotFoundError('未能在data/目录下找到任何快照数据')
 
 			self.buffer_ptr = len(self.buffer)
 			if len(self.buffer) >= self.buffer_size:
 				self.buffer = self.buffer[len(self.buffer) - self.buffer_size : self.buffer_size]
 				self.buffer_ptr = 0
 
-			print(f'已加载 {len(self.buffer)} 条训练数据到缓冲区')
+			print(f'成功从 {file_path} 加载 {len(self.buffer)} 条训练数据到缓冲区')
 		except Exception as e:
 			print(f'未加载数据: {e}')
 
@@ -102,11 +112,11 @@ class AlphaZeroModule(torch.nn.Module):
 		self.train()
 
 		for epoch in range(1, epochs + 1):
-			batch = random.sample(self.buffer, min(config.AlphaZero.BatchSize, len(self.buffer)))
+			batch = random.sample(self.buffer, min(config.Train.BatchSize, len(self.buffer)))
 			states,target_policies,target_values = [],[],[]
 
-			n = int(random.random()*3)
-			n1 = random.random()
+			n = int(random.random() * 3)
+			flip_value = random.random()
 			for data in batch:
 				state = torch.tensor(data['state'],dtype=torch.float32).view(2, ChessGameCore.size, ChessGameCore.size) #[2,size,size]
 				policy = torch.tensor(data['search_rate'],dtype=torch.float32) #[size,size]
@@ -114,7 +124,10 @@ class AlphaZeroModule(torch.nn.Module):
 				# 数据增强
 				state = torch.rot90(state, k=n, dims=(1, 2))  
 				policy = torch.rot90(policy, k=n, dims=(0, 1)) 
-				if n1 < 0.5:  
+				if (
+					config.Train.UseRandomFlip and
+					flip_value < config.Train.RandomFlipThreshold
+				):
 					state = torch.flip(state, dims=[2])  
 					policy = torch.flip(policy, dims=[1]) 
 
@@ -135,7 +148,7 @@ class AlphaZeroModule(torch.nn.Module):
 
 			value_loss = F.mse_loss(values, target_values)
 
-			loss = policy_loss + 0.4*value_loss
+			loss = policy_loss + config.Train.ValueLossWeight * value_loss
 
 			# backward
 			self.optimizer.zero_grad()

@@ -1,3 +1,8 @@
+import os
+
+
+WorkingPath = os.path.dirname(os.path.dirname(__file__))
+
 class UI:
 	"""
 	**!!! 不推荐修改 !!!**
@@ -20,7 +25,7 @@ class Train:
 	RewardAttenuationFactor: float = 0.6
 	"""奖励衰减系数。"""
 
-	Times: int = 2000
+	Times: int = 3600
 	"""训练次数。"""
 
 	Epochs: int = 1000
@@ -35,12 +40,33 @@ class Train:
 	InCombatUpdateTimes: int = 500
 	"""游玩时 MCTS 搜索次数。"""
 
+	UseRandomFlip: bool = False
+	"""是否启用随机翻转。"""
+
+	RandomFlipThreshold: float = 0.5
+	"""随机翻转临界值。随机值小于该值时，尝试启用随机翻转。"""
+
+	ValueLossWeight: float = 0.4
+	"""Value loss 权重。"""
+
+	MCTSExplorationRate: float = 0.3
+	"""MCTS 探索率。"""
+
+	BufferSize: int = 50000
+	"""缓冲区大小。"""
+
+	LearningRate: float = 0.001
+	"""学习率。"""
+
+	BatchSize: int = 128
+	"""训练批次大小。"""
+
 class GameCore:
 	"""
 	N子棋游戏规则设置。**!!! 修改后请删除旧模型与数据以避免维度不一致或模型失效 !!!** :: 
-    
-    	rm -f model.pth data/d1.json
-    
+	
+		rm -rf model.pth data
+	
 	"""
 
 	ChessboardSize: int = 7
@@ -61,15 +87,3 @@ class GameCore:
 		# ...更多玩法
 
 	"""
-
-class AlphaZero:
-	"""AlphaZero 相关配置项。"""
-
-	BufferSize: int = 5_0000
-	"""缓冲区大小。"""
-
-	LearningRate: float = 0.001
-	"""学习率。"""
-
-	BatchSize: int = 128
-	"""训练批次大小。"""
